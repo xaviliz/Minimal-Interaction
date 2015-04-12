@@ -5,7 +5,7 @@
 #ls()		# list of files
 
 # Read csv file
-x = csv.data <- read.csv("new4.csv")
+x = csv.data <- read.csv("new5.csv")
 
 # Check the head of file
 head(x)
@@ -35,7 +35,7 @@ plot(x = x$Time, y = statA,       # variables
 xlim = c(82*0.04,(length(x$Time)+1200)*0.04), 
 cex = 0.1, ylim = c(55,width),       # ranges for axes
 col = "grey",                                                                   # color
-main = "Experiment 4 - Results",                                                    # figure title
+main = "Experiment 5 - Results",                                                    # figure title
 xlab = "Time (s)", ylab="Position (pix)")                                        # labeling axes
 )
 
