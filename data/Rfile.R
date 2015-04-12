@@ -1,7 +1,7 @@
 # Rscript to display data extracted in the experiment
 
 # Read csv file
-x = csv.data <- read.csv("new.csv")
+x = csv.data <- read.csv("new1.csv")
 
 # Check the head of file
 head(x)
@@ -99,4 +99,7 @@ col = c("black", "black", "red", "cyan", "green", "red", "black", "magenta"), # 
 pch = c(1,1,1,1,1,13,18,18)) # different shapes
 
 
+# Colors for visualitation
 
+# static with greese
+# more fine lines
