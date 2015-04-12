@@ -49,7 +49,7 @@ int pos = 70, move = 0, pmove = 0,
     vel = 0, torus_pos = 0, ptorus_pos, ppos = pos,
     posb = 0, pbpos = posb, ptorus_posB, torus_posB,
     rpos = 0, n_cross = 0, n_shad1 = 0, n_stat1 = 0,
-    n_shad2 = 0, n_stat2 = 0, dis = 0;
+    n_shad2 = 0, n_stat2 = 0, dis = 0, disb = 0, vel_factor = 8;
 //OSC variables width-pos-distanceAlias
 int in_port = 9000, out_port = 8000;
 float yawValue1, yawValue2, displayValue1, displayValue2;  // OSC Values received
@@ -64,7 +64,8 @@ int nframe; float time;
 void setup() {
   
   // Display settings (width and height)
-  size(1440,900,P3D);
+  // Change this values if you use a shorter screen
+  size(1440,990,P3D); // 1440x990
   frameRate(25); 
   /* start oscP5, listening for incoming messages at port 9000*/
   oscP5 = new OscP5(this,in_port);
@@ -115,9 +116,9 @@ void setup() {
   square1.beginShape();
   // You can set fill and stroke
   //square1.fill(102);
-  square1.fill(#3aff82);
+  square1.fill(#3aff82);            // green color
   square1.stroke(50);
-  square1.strokeWeight(2);
+  square1.strokeWeight(2);          // stroke color
   // Here, we are hardcoding a series of vertices
   square1.vertex(pos,  (height/2)-heightLine-edgeSquare);
   square1.vertex(pos,  (height/2)-heightLine);
@@ -131,7 +132,7 @@ void setup() {
   // You can set fill and stroke
   shadow1.fill(25);
   shadow1.stroke(50);
-  shadow1.strokeWeight(2);
+  //shadow1.strokeWeight(2);
   // Here, we are hardcoding a series of vertices
   shadow1.vertex(pos+distanceAlias, (height/2)-heightLine-edgeSquare);
   shadow1.vertex(pos+distanceAlias, (height/2)-heightLine);
@@ -146,7 +147,11 @@ void setup() {
   //square2.fill(102);
   square2.fill(#ff3a54);
   square2.stroke(200);
-  square2.strokeWeight(2);
+  //square2.strokeWeight(2);
+  
+  // TODO correct stroke
+  // Search for a way to plot data
+  // Think in how to modify the code to work with two environments
   
   // Here, we are hardcoding a series of vertices
   square2.vertex(width-pos-distanceAlias,  (height/2)-heightLine-edgeSquare);
@@ -155,21 +160,21 @@ void setup() {
   square2.vertex(width-pos-distanceAlias+edgeSquare, (height/2)-edgeSquare-heightLine);
   square2.endShape(CLOSE);
 
-  // mobile lure shape
+  // Mobile lure shape
   fill(0);
   stroke(50);
-  strokeWeight(2);
+  //strokeWeight(2);
   shadow2 = createShape(RECT,width-pos, (height/2)-5-50, 50,50);
+  // Static objects
   fill(200);
   stroke(50);
   strokeWeight(2); 
-  // Static objects
   static1 = createShape(RECT,width/4, (height/2)-5-50, 50,50);
   static2 = createShape(RECT,3*width/4, (height/2)-5-50, 50,50);
   
   // PrintWriter class to extract data in txt file.
   out_txt = createWriter("positions.txt");
-  // Create a csv file with all the columns that we need
+  // Create a csv file with each feature by columns
   data_out = new Table();
   data_out.addColumn("Time"); // in seconds
   data_out.addColumn("AvatarA"); // postion Avatar A
@@ -181,8 +186,7 @@ void setup() {
   data_out.addColumn("n_stat1");
   data_out.addColumn("n_stat2");
   data_out.addColumn("clickA");
-  data_out.addColumn("clickB");
-  
+  data_out.addColumn("clickB"); 
 }
 
 public void test(int theA, int theB) {
@@ -197,11 +201,11 @@ void draw() {
   background(240);              // background luminance
   /* Text on screen */
   beginShape();
-  fill (0,0,0);
+  fill (0,0,0);                 // Text in black color
   endShape();
   // Text on the background
-  textFont(font, 24);
-  //text ("Y-axis accelerometer in port 9000 with address /yaw/acc/ to toggle graph displays.", 20, 30);
+  textFont(font, 24);            // Load font file and set the size
+  // Time data on the screen
   text ("TIME:", 20, 30);
   text(nf(time, 1,1),225, 30);
   /* User A statistics - Left side */
@@ -257,7 +261,7 @@ void draw() {
   //move = mouseX - pmouseX;       // compute the present move
   //vel = move - pmove;            // compute the velocity of mouse position
   ppos = pos;                      // last position
-  pos = pos + mapValue1;//+move    // move is for mouse control, fillVall for arrow key control
+  pos = pos + mapValue1+fillVal;//+move    // move is for mouse control, fillVall for arrow key control
   pos = pos % width;               // Modul of position, force avaratar to be inside the screen
   // Correction of position when it is negative
   if (pos <= 0){
@@ -279,7 +283,7 @@ void draw() {
   }else{
     // for left side
     //println("Crossing left side with avatarA: ", width + pos - ppos);
-    torus_pos = width + pos-ppos+1;
+    torus_pos = width + pos - ppos + 1;
     square1.translate(torus_pos, 0);
     shadow1.translate(torus_pos, 0);
   }
@@ -351,21 +355,24 @@ void draw() {
   // Vibration when both avatars cross
       // it will depends on the last position and the present position
       // and evaluate if avatars have crossed in this frame.
+      disb = dis;
       dis = pos-posb;
       //println("Distance between avatars: ", dis);
   if ((ppos>pbpos && pos<posb) || (ppos<pbpos && pos>posb)){
     //println("*** /// Crossing between avatars: ", (pos-posb));
     // Avoid feedback when some of them is crossing the scene
-    if ((abs(ppos-pos) < 1000) && (abs(pbpos-posb) < 1000)){
-      playSound1(); playSound2();
-      // Vibration in avatar 1
-      vibrate(wiiNumber1,  true);
-      // vibration in avatar 2
-      vibrate(wiiNumber2,  true);
-      delay(150);              // Duration of vibration in miliseconds
-      vibrate(wiiNumber1, false);
-      vibrate(wiiNumber2, false);
-      n_cross = n_cross + 1;
+    if ((dis < 0 && disb>=0) || (dis>0 && disb<=0)){
+      if ((abs(ppos-pos) < 1000) && (abs(pbpos-posb) < 1000)){
+        playSound1(); playSound2();
+        // Vibration in avatar 1
+        vibrate(wiiNumber1,  true);
+        // vibration in avatar 2
+        vibrate(wiiNumber2,  true);
+        delay(150);              // Duration of vibration in miliseconds
+        vibrate(wiiNumber1, false);
+        vibrate(wiiNumber2, false);
+        n_cross = n_cross + 1;
+      }
     }
   }
   // Vibration when the avatar A cross with the shadow B
@@ -422,7 +429,7 @@ void oscEvent(OscMessage theOscMessage) {
   if(addr.indexOf("wii/1/accel/pry/2")!=-1){
     // Yaw value from wii1
     yawValue1 = theOscMessage.get(0).floatValue();
-    mapValue1 = round(10 * (yawValue1 - 0.5));
+    mapValue1 = round(vel_factor * (yawValue1 - 0.5));
   }
   // Avartar A click (button B)
   if(addr.indexOf("wii/1/button/B")!=-1){
@@ -432,11 +439,11 @@ void oscEvent(OscMessage theOscMessage) {
   if(addr.indexOf("wii/2/accel/pry/2")!=-1){
     // Yaw value from Wii2 (Osculator)
     yawValue2 = theOscMessage.get(0).floatValue();
-    //println("OSC value", yawValue);
-    mapValue2 = round(10 * (yawValue2 - 0.5));
+    println("OSC value", yawValue2);
+    mapValue2 = round(vel_factor * (yawValue2 - 0.5));
     displayValue2 = yawValue2;
-    //println(addr);
-    //println("Mapped OSC value", mapValue);
+    println(addr);
+    println("Mapped OSC value", mapValue2);
   }
   // Avartar B click (button B)
   if(addr.indexOf("wii/2/button/B")!=-1){
